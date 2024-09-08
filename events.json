@@ -1,14 +1,17 @@
 [
   {
     "title": "Event1",
+    "groupId": "testGroupId1",
     "start": "2024-09-05"
   },
   {
     "title": "Event2",
+    "groupId": "testGroupId2",
     "start": "2024-09-10"
   },
   {
     "title": "Event3",
+    "groupId": "testGroupId3",
     "start": "2024-09-15"
   },
   {
@@ -17,6 +20,7 @@
   },
   {
     "title": "Event5",
+    "groupId": "testGroupId5",
     "start": "2024-09-23"
   },
   {
@@ -31,31 +35,48 @@
   },
   {
     "title": "Meeting",
+    "groupId": "testGroupId1",
     "start": "2024-09-05T12:00:00",
     "constrant": "available",
     "color": "#257e4a"
   },
   {
     "title": "Date",
+    "groupId": "testGroupId5",
     "start": "2024-09-23T11:00:00",
     "constrant": "available",
     "color": "#257e4a"
   },
   {
     "title": "Movies with friends",
+    "groupId": "testGroupId2",
     "start": "2024-09-10T06:00:00",
     "constrant": "available",
     "color": "#257e4a"
   },
   {
     "title": "shopping",
+    "groupId": "testGroupId3",
     "start": "2024-09-15T18:00:00",
     "constrant": "available",
     "color": "#257e4a"
   },
   {
     "title": "shopping",
-    "start": "2024-09-1T18:00:00",
+    "groupId": "testGroupId5",
+    "start": "2024-09-23T18:00:00",
+    "constrant": "available",
+    "color": "#257e4a"
+  },
+  {
+    "title": "New movie release",
+    "start": "2024-09-17T06:00:00",
+    "constrant": "available",
+    "color": "#257e4a"
+  },
+  {
+    "title": "shopping",
+    "start": "2024-09-18T07:00:00",
     "constrant": "available",
     "color": "#257e4a"
   }

@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', function () {
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,timeGridDay',
         },
-        events: 'events.json',
 
         editable: true,
         droppable: true,
@@ -33,16 +32,44 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
     calendar.render();
+    loadExternalEvents();
+    loadEvents(calendar);
 });
 
 
-const fetchEvents = document.getElementById('external-events');
+function loadEvents(calendar) {
+    const xhr = new XMLHttpRequest();
 
-fetch("./list.json").then(res => res.json()).then(data => {
-    data.forEach(event => {
-        const eventEl = document.createElement('div');
-        eventEl.innerText = event.title;
-        eventEl.className = 'fc-event';
-        fetchEvents.appendChild(eventEl);
-    });
-});
+    xhr.open('GET', './events.json', true);
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            calendar.addEventSource(data);
+        } else if (xhr.readyState === 4) {
+            console.error('Error loading calendar events:', xhr.statusText);
+        }
+    };
+    xhr.send();
+}
+
+function loadExternalEvents() {
+    const Events = document.getElementById('external-events');
+    const xhr = new XMLHttpRequest();
+
+    xhr.open('GET', './list.json', true);
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            data.forEach(event => {
+                const eventEl = document.createElement('div');
+                eventEl.innerText = event.title;
+                eventEl.className = 'fc-event';
+                Events.appendChild(eventEl);
+            });
+        }
+        else if (xhr.readyState === 4) {
+            console.error('Error loading calendar events:', xhr.statusText);
+        }
+    };
+    xhr.send();
+}
