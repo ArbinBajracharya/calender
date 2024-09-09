@@ -38,38 +38,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 function loadEvents(calendar) {
-    const xhr = new XMLHttpRequest();
-
-    xhr.open('GET', './events.json', true);
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            const data = JSON.parse(xhr.responseText);
+    $.ajax({
+        url: './events.json',
+        method: 'GET',
+        dataType: 'json',
+        success: function (data) {
             calendar.addEventSource(data);
-        } else if (xhr.readyState === 4) {
-            console.error('Error loading calendar events:', xhr.statusText);
+        },
+        error: function (xhr, status, error) {
+            console.error('Error loading calendar events:', error);
         }
-    };
-    xhr.send();
+    });
 }
 
 function loadExternalEvents() {
-    const Events = document.getElementById('external-events');
-    const xhr = new XMLHttpRequest();
-
-    xhr.open('GET', './list.json', true);
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            const data = JSON.parse(xhr.responseText);
+    $.ajax({
+        url: './list.json',
+        method: 'GET',
+        dataType: 'json',
+        success: function (data) {
+            const Events = $('#external-events');
             data.forEach(event => {
-                const eventEl = document.createElement('div');
-                eventEl.innerText = event.title;
-                eventEl.className = 'fc-event';
-                Events.appendChild(eventEl);
+                const eventEl = $('<div></div>')
+                    .addClass('fc-event')
+                    .text(event.title);
+                Events.append(eventEl);
             });
+        },
+        error: function (xhr, status, error) {
+            console.error('Error loading external events:', error);
         }
-        else if (xhr.readyState === 4) {
-            console.error('Error loading calendar events:', xhr.statusText);
-        }
-    };
-    xhr.send();
+    });
 }
