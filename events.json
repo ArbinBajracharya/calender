@@ -1,17 +1,14 @@
 [
   {
     "title": "Event1",
-    "groupId": "GroupId1",
     "start": "2024-09-05"
   },
   {
     "title": "Event2",
-    "groupId": "GroupId2",
     "start": "2024-09-10"
   },
   {
     "title": "Event3",
-    "groupId": "GroupId3",
     "start": "2024-09-15"
   },
   {
@@ -20,7 +17,6 @@
   },
   {
     "title": "Event5",
-    "groupId": "GroupId5",
     "start": "2024-09-23"
   },
   {
@@ -35,35 +31,30 @@
   },
   {
     "title": "Meeting",
-    "groupId": "GroupId1",
     "start": "2024-09-05T12:00:00",
     "constrant": "available",
     "color": "#257e4a"
   },
   {
     "title": "Date",
-    "groupId": "GroupId5",
     "start": "2024-09-23T11:00:00",
     "constrant": "available",
     "color": "#257e4a"
   },
   {
     "title": "Movies with friends",
-    "groupId": "GroupId2",
     "start": "2024-09-10T06:00:00",
     "constrant": "available",
     "color": "#257e4a"
   },
   {
     "title": "shopping",
-    "groupId": "GroupId3",
     "start": "2024-09-15T18:00:00",
     "constrant": "available",
     "color": "#257e4a"
   },
   {
     "title": "shopping",
-    "groupId": "GroupId5",
     "start": "2024-09-23T18:00:00",
     "constrant": "available",
     "color": "#257e4a"
