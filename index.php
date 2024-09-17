@@ -11,27 +11,34 @@
 
 <body>
     <div class="new-events">
-        <div id="add-events" class="right-align">
-            <button data-modal-target="#modal" class="btn">Add Event</button>
+        <div class="events-handle">
+            <div id="event-types" class="left-align">
+                <button class="btn fc-event-personal">Personal</button>
+                <button class="btn fc-event-project">Project</button>
+                <button class="btn fc-event-organization">Organization</button>
+            </div>
+            <div id="add-events" class="right-align">
+                <button data-modal-target="#modal" class="btn">Add Event</button>
+            </div>
         </div>
         <div class="modal" id="modal">
             <div class="modal-header">
-                <div class="title">Example Modal</div>
+                <div class="title">Add Event</div>
                 <button data-close-button class="close-button">&times;</button>
             </div>
             <div class="modal-body">
                 <form class="form" id="eventForm" method="post">
                     <div class="event-form">
-                        <lable>Name:</lable>
+                        <label>Name:</label>
                         <input type="text" id="title" name="title" placeholder="Event Name" required>
                     </div>
                     <div class="event-form">
                         <label>Start Date:</label>
-                        <input type="datetime" id="startDateTime" name="start" placeholder="Start Date" required>
+                        <input type="datetime-local" id="startDateTime" name="start" placeholder="Start Date" required>
                     </div>
                     <div class="event-form">
                         <label>End Date:</label>
-                        <input type="datetime" id="endDateTime" name="end" placeholder="End Date">
+                        <input type="datetime-local" id="endDateTime" name="end" placeholder="End Date">
                     </div>
                     <div class="event-form">
                         <label>Description</label>
@@ -41,11 +48,10 @@
                         <label>Type</label><br>
                         <input type="radio" name="type" value="personal" required>Personal
                         <input type="radio" name="type" value="project" required>Project
-                        <input type="radio" name="type" value="organizational" required>Organizational
+                        <input type="radio" name="type" value="organization" required>Organization
                     </div>
-
                     <div class="event-form">
-                        <label>status</label><br>
+                        <label>Status</label><br>
                         <input type="radio" name="status" value="active" required>Active
                         <input type="radio" name="status" value="inactive" required>Inactive
                     </div>
@@ -54,6 +60,7 @@
             </div>
         </div>
         <div id="overlay"></div>
+
     </div>
     <!-- <div class="text-end">
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">

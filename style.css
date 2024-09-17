@@ -21,10 +21,17 @@
   cursor: move;
   margin: 3px 0;
 }
-
+.events-handle {
+  display: flex;
+  justify-content: space-between;
+}
 .right-align {
   text-align: right;
   margin-right: 20px;
+}
+.left-align {
+  text-align: left;
+  margin-left: 300px;
 }
 
 .btn {
@@ -219,4 +226,30 @@ form#updateForm button[type="submit"]:hover {
 
 form#updateForm button#deleteEventBtn:hover {
   background-color: #c9302c;
+}
+
+.fc-event-personal {
+  background-color: #2ecc71 !important; /* Green */
+  border-color: #2ecc71 !important;
+  color: white !important;
+}
+
+.fc-event-organization {
+  background-color: #f39c12 !important; /* Orange */
+  border-color: #f39c12 !important;
+  color: white !important;
+}
+
+.fc-event-project {
+  background-color: #3498db !important; /* Blue */
+  border-color: #3498db !important;
+  color: white !important;
+}
+.fc-daygrid-event-dot {
+  border: none;
+  border-radius: 10px;
+  box-sizing: 10px;
+  height: 8px; /* Adjust size as needed */
+  width: 8px; /* Adjust size as needed */
+  margin: 0px 4px;
 }

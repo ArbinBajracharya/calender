@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+
     // Initialize FullCalendar
     var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
@@ -24,18 +25,20 @@ document.addEventListener('DOMContentLoaded', function () {
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,timeGridDay',
         },
+
         editable: true,
         droppable: true,
         drop: function (info) {
             info.draggedEl.parentNode.removeChild(info.draggedEl);
         },
+
         eventDrop: function (info) {
             // Automatically update the event when it's dragged and dropped
             var updatedEvent = {
                 id: info.event.id,
                 title: info.event.title,
-                start: info.event.start,
-                end: info.event.end ? info.event.end : null,
+                start: info.event.start ? info.event.start.toISOString() : null,
+                end: info.event.end ? info.event.end.toISOString() : null,
                 description: info.event.extendedProps.description,
                 type: info.event.extendedProps.type,
                 status: info.event.extendedProps.status
@@ -49,8 +52,8 @@ document.addEventListener('DOMContentLoaded', function () {
             var updatedEvent = {
                 id: info.event.id,
                 title: info.event.title,
-                start: info.event.start,
-                end: info.event.end ? info.event.end : null,
+                start: info.event.start ? info.event.start.toISOString() : null,
+                end: info.event.end ? info.event.end.toISOString() : null,
                 description: info.event.extendedProps.description,
                 type: info.event.extendedProps.type,
                 status: info.event.extendedProps.status
@@ -61,12 +64,126 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         eventClick: function (info) {
             openEventPopup(info.event);
+        },
+        dateClick: function (info) {
+            openDateModal(info.dateStr);
+        },
+        eventClassNames: function (info) {
+            var extendedProps = info.event.extendedProps; // Access the extendedProps object
+            var type = extendedProps.type; // Extract the type from extendedProps
+
+            // Determine class names based on type
+            if (type === 'personal') {
+                return ['fc-event-personal'];
+            } else if (type === 'project') {
+                return ['fc-event-project'];
+            } else if (type === 'organization') {
+                return ['fc-event-organization'];
+            }
+            return []; // Default class if type is not matched
         }
     });
 
     calendar.render();
     loadExternalEvents();
     loadEvents(calendar);
+
+    function openDateModal(dateStr) {
+        var modalContent = modal.querySelector('.modal-body');
+        modal.querySelector('.modal-title').textContent = 'Add New Event';
+
+        // Set default values for the date fields
+        modalContent.innerHTML = `
+            <form id="eventForm">
+                <div class="form-group">
+                    <label for="eventTitle"><strong>Title:</strong></label>
+                    <input type="text" id="eventTitle" name="title" class="form-control" placeholder="Event Name" required>
+                </div>
+                <div class="form-group">
+                    <label for="eventStart"><strong>Start Date:</strong></label>
+                    <input type="datetime-local" id="eventStart" name="start" class="form-control" value="${dateStr}T00:00" required>
+                </div>
+                <div class="form-group">
+                    <label for="eventEnd"><strong>End Date:</strong></label>
+                    <input type="datetime-local" id="eventEnd" name="end" class="form-control" value="${dateStr}T23:59">
+                </div>
+                <div class="form-group">
+                    <label for="eventDescription"><strong>Description:</strong></label>
+                    <textarea id="eventDescription" name="description" class="form-control" placeholder="Description"></textarea>
+                </div>
+                <div class="form-group">
+                    <label><strong>Type:</strong></label><br>
+                    <input type="radio" id="eventTypePersonal" name="type" value="personal" required>
+                    <label for="eventTypePersonal">Personal</label>
+                    <input type="radio" id="eventTypeProject" name="type" value="project" required>
+                    <label for="eventTypeProject">Project</label>
+                    <input type="radio" id="eventTypeOrganization" name="type" value="organization" required>
+                    <label for="eventTypeOrganization">Organization</label>
+                </div>
+                <div class="form-group">
+                    <label><strong>Status:</strong></label><br>
+                    <input type="radio" id="eventStatusActive" name="status" value="active" required>
+                    <label for="eventStatusActive">Active</label>
+                    <input type="radio" id="eventStatusInactive" name="status" value="inactive" required>
+                    <label for="eventStatusInactive">Inactive</label>
+                </div>
+                <button type="submit" id="insert" class="btn btn-primary">Add Event</button>
+            </form>
+        `;
+
+        // Show the modal and overlay
+        modal.style.display = 'block';
+        overlay.style.display = 'block';
+
+        var eventForm = modal.querySelector('#eventForm');
+        eventForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            var eventForm = modal.querySelector('#eventForm');
+            eventForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                var formData = new FormData(eventForm);
+                var eventData = {
+                    title: formData.get('title'),
+                    start: formData.get('start'),
+                    end: formData.get('end'),
+                    description: formData.get('description'),
+                    type: formData.get('type'),
+                    status: formData.get('status')
+                };
+
+                // Send the form data to the server
+                $.ajax({
+                    url: 'insert.php',
+                    type: 'POST',
+                    data: JSON.stringify(eventData),
+                    contentType: 'application/json',
+                    success: function (response) {
+                        try {
+                            var res = JSON.parse(response);
+                            if (res.success) {
+                                alert('Event added successfully!');
+                                location.reload();
+                            } else {
+                                alert('Error adding event: ' + res.error);
+                            }
+                        } catch (e) {
+                            // alert('Error parsing response: ' + e.message);
+                            console.error(e);
+                            console.log(response);
+                            console.log(data);
+                        }
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        alert('Error: ' + textStatus + ' - ' + errorThrown);
+                    }
+                });
+            });
+
+        });
+
+    }
 
     // Function to open the popup
     function openEventPopup(event) {
@@ -80,11 +197,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
                 <div class="form-group">
                     <label for="eventStart"><strong>Start Date:</strong></label>
-                    <input type="datetime" id="eventStart" name="start" class="form-control"  value="${event.start.toISOString().slice(0, 16)}" required>
+                    <input type="datetime-local" id="eventStart" name="start" class="form-control"  value="${event.start.toISOString().slice(0, 16)}" required>
                 </div>
                 <div class="form-group">
                     <label for="eventEnd"><strong>End Date:</strong></label>
-                    <input type="datetime" id="eventEnd" name="end" class="form-control" value="${event.end ? event.end.toISOString().slice(0, 16) : ''}">
+                    <input type="datetime-local" id="eventEnd" name="end" class="form-control" value="${event.end ? event.end.toISOString().slice(0, 16) : ''}">
                 </div>
                 <div class="form-group">
                     <label for="eventDescription"><strong>Description:</strong></label>
@@ -110,19 +227,19 @@ document.addEventListener('DOMContentLoaded', function () {
             <button type="button" id="deleteEventBtn" class="btn btn-danger">Delete Event</button>
         </form>
     `;
-        flatpickr("#eventStart", { dateFormat: "Y/m/d H:i", enableTime: true, minDate: "today" });
-        flatpickr("#eventEnd", { dateFormat: "Y/m/d H:i", enableTime: true, minDate: "today" });
+        flatpickr("#eventStart", { dateFormat: "Y/m/d H:i", enableTime: true, time_24hr: true, minDate: "today" });
+        flatpickr("#eventEnd", { dateFormat: "Y/m/d H:i", enableTime: true, time_24hr: true, minDate: "today" });
 
         $('#updateForm').on('submit', function (e) {
             e.preventDefault();
             var updatedEvent = {
                 id: event.id,
-                title: $('#eventTitle').val(),
-                start: $('#eventStart').val(),
-                end: $('#eventEnd').val(),
-                description: $('#eventDescription').val(),
-                type: $('input[name="type"]:checked').val(),
-                status: $('input[name="status"]:checked').val()
+                title: document.getElementById('eventTitle').value,
+                start: new Date(document.getElementById('eventStart').value),  // Ensure proper date conversion
+                end: new Date(document.getElementById('eventEnd').value),
+                description: document.getElementById('eventDescription').value,
+                type: document.querySelector('input[name="type"]:checked').value,
+                status: document.querySelector('input[name="status"]:checked').value
             };
             if (confirm('Are you sure you want to Update this event?')) {
                 updateEvent(updatedEvent);
@@ -205,6 +322,7 @@ function loadEvents(calendar) {
         dataType: 'json',
         success: function (data) {
             calendar.addEventSource(data);
+            console.log(data);
         },
         error: function (xhr, status, error) {
             console.error('Error loading calendar events:', error);
@@ -235,6 +353,7 @@ flatpickr("#startDateTime", {
     enableTime: true,
     minDate: "today",
     dateFormat: "y/m/d H:i", // Your preferred format (MM/DD/YYYY and 24-hour time)
+    time_24hr: true
 });
 
 // Initialize Flatpickr for end date and time
@@ -242,6 +361,7 @@ flatpickr("#endDateTime", {
     enableTime: true,
     minDate: "today",
     dateFormat: "y/m/d H:i",
+    time_24hr: true
 });
 
 $(document).ready(function () {
