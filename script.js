@@ -88,6 +88,8 @@ document.addEventListener('DOMContentLoaded', function () {
     loadExternalEvents();
     loadEvents(calendar);
 
+
+
     function openDateModal(dateStr) {
         var modalContent = modal.querySelector('.modal-body');
         modal.querySelector('.modal-title').textContent = 'Add New Event';
@@ -184,11 +186,23 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
     }
+    // Format date to 'YYYY-MM-DDTHH:MM' (local time) for datetime-local input
+    function formatDateForBackend(date) {
+        const year = date.getFullYear();
+        const month = ('0' + (date.getMonth() + 1)).slice(-2); // Ensure 2 digits
+        const day = ('0' + date.getDate()).slice(-2);
+        const hours = ('0' + date.getHours()).slice(-2);
+        const minutes = ('0' + date.getMinutes()).slice(-2);
+        const seconds = ('0' + date.getSeconds()).slice(-2);
 
-    // Function to open the popup
+        return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+    }
+
     function openEventPopup(event) {
         var modalContent = modal.querySelector('.modal-body');
         modal.querySelector('.modal-title').textContent = event.title;
+
+        // Use the Y/M/D H:M:S format for text inputs
         modalContent.innerHTML = `
             <form id="updateForm">
                 <div class="form-group">
@@ -197,11 +211,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
                 <div class="form-group">
                     <label for="eventStart"><strong>Start Date:</strong></label>
-                    <input type="datetime-local" id="eventStart" name="start" class="form-control"  value="${event.start.toISOString().slice(0, 16)}" required>
+                    <input type="text" id="eventStart" name="start" class="form-control" value="${formatDateForBackend(new Date(event.start))}" required>
                 </div>
                 <div class="form-group">
                     <label for="eventEnd"><strong>End Date:</strong></label>
-                    <input type="datetime-local" id="eventEnd" name="end" class="form-control" value="${event.end ? event.end.toISOString().slice(0, 16) : ''}">
+                    <input type="text" id="eventEnd" name="end" class="form-control" value="${event.end ? formatDateForBackend(new Date(event.end)) : ''}">
                 </div>
                 <div class="form-group">
                     <label for="eventDescription"><strong>Description:</strong></label>
@@ -226,25 +240,25 @@ document.addEventListener('DOMContentLoaded', function () {
             <button type="submit" class="btn btn-primary">Save Changes</button>
             <button type="button" id="deleteEventBtn" class="btn btn-danger">Delete Event</button>
         </form>
-    `;
-        flatpickr("#eventStart", { dateFormat: "Y/m/d H:i", enableTime: true, time_24hr: true, minDate: "today" });
-        flatpickr("#eventEnd", { dateFormat: "Y/m/d H:i", enableTime: true, time_24hr: true, minDate: "today" });
+        `;
 
         $('#updateForm').on('submit', function (e) {
             e.preventDefault();
+
+            // Collect data and ensure it's in the 'Y/M/D H:M:S' format
             var updatedEvent = {
                 id: event.id,
                 title: document.getElementById('eventTitle').value,
-                start: new Date(document.getElementById('eventStart').value),  // Ensure proper date conversion
-                end: new Date(document.getElementById('eventEnd').value),
+                start: document.getElementById('eventStart').value,  // In 'Y/M/D H:M:S' format
+                end: document.getElementById('eventEnd').value || null,
                 description: document.getElementById('eventDescription').value,
                 type: document.querySelector('input[name="type"]:checked').value,
                 status: document.querySelector('input[name="status"]:checked').value
             };
-            if (confirm('Are you sure you want to Update this event?')) {
-                updateEvent(updatedEvent);
-            }
 
+            if (confirm('Are you sure you want to Update this event?')) {
+                updateEvent(updatedEvent); // Send the updated data to the backend
+            }
         });
         $('#deleteEventBtn').on('click', function () {
             if (confirm('Are you sure you want to delete this event?')) {
@@ -322,7 +336,6 @@ function loadEvents(calendar) {
         dataType: 'json',
         success: function (data) {
             calendar.addEventSource(data);
-            console.log(data);
         },
         error: function (xhr, status, error) {
             console.error('Error loading calendar events:', error);
