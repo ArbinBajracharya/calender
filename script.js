@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
+    let eventType = null;
+    var eventTable = $('#eventTable').DataTable();
     var calendarEl = document.getElementById('calendar');
     var containerEl = document.getElementById('external-events');
     var modal = document.getElementById('eventModal'); // Add this line to get the modal element
@@ -16,22 +18,19 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-
     // Initialize FullCalendar
     var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         headerToolbar: {
             left: 'prev,next',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth',
         },
-
         editable: true,
         droppable: true,
         drop: function (info) {
             info.draggedEl.parentNode.removeChild(info.draggedEl);
         },
-
         eventDrop: function (info) {
             // Automatically update the event when it's dragged and dropped
             var updatedEvent = {
@@ -41,6 +40,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 end: info.event.end ? info.event.end.toISOString() : null,
                 description: info.event.extendedProps.description,
                 type: info.event.extendedProps.type,
+                badge: info.event.extendedProps.badge,
                 status: info.event.extendedProps.status
             };
 
@@ -56,11 +56,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 end: info.event.end ? info.event.end.toISOString() : null,
                 description: info.event.extendedProps.description,
                 type: info.event.extendedProps.type,
+                badge: info.event.extendedProps.badge,
                 status: info.event.extendedProps.status
             };
-
             // Call updateEvent to send data to the server
             updateEvent(updatedEvent);
+        },
+        eventDidMount: function (info) {
+            // Trigger custom event to add event to DataTable
+            $(document).trigger('eventAdded', [info.event]);
+
+            // Apply filtering logic
+            if (eventType && info.event.extendedProps.type !== eventType) {
+                info.el.style.display = 'none';
+            }
         },
         eventClick: function (info) {
             openEventPopup(info.event);
@@ -88,7 +97,35 @@ document.addEventListener('DOMContentLoaded', function () {
     loadExternalEvents();
     loadEvents(calendar);
 
+    //Filter events by type
+    $('#filter-events button').on('click', function () {
+        let eventType = $(this).data('type'); // Get event type from the button
+        if (!eventType) {
+            console.error('Event type not found!');
+            return;
+        } else if (eventType === 'all') {
+            // Load all events if the 'All' button is clicked
+            loadEvents(calendar, null); // Passing `null` or an empty string can be a way to load all events
+        } else {
+            // Load events filtered by the selected event type
+            loadEvents(calendar, eventType);
+        } // Load events with the selected filter
+    });
 
+    let selectedFilterType = 'personal'; // Default to 'personal'
+
+    // Function to handle button clicks to set the select value
+    $('#filter-events .btn').on('click', function () {
+        const type = $(this).data('type'); // Get the type from the button
+
+        if (type === 'all') {
+            selectedFilterType = 'personal'; // Set to 'personal' when "All" is clicked
+        } else {
+            selectedFilterType = type;
+        }
+        $('#eventtype').val(selectedFilterType); // Set the dropdown value
+        updateBadgeVisibility(); // Update badge visibility
+    });
 
     function openDateModal(dateStr) {
         var modalContent = modal.querySelector('.modal-body');
@@ -103,28 +140,72 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
                 <div class="form-group">
                     <label for="eventStart"><strong>Start Date:</strong></label>
-                    <input type="datetime-local" id="eventStart" name="start" class="form-control" value="${dateStr}T00:00" required>
+                    <input type="datetime" id="eventStart" name="start" class="form-control" value="${dateStr}" required>
                 </div>
                 <div class="form-group">
                     <label for="eventEnd"><strong>End Date:</strong></label>
-                    <input type="datetime-local" id="eventEnd" name="end" class="form-control" value="${dateStr}T23:59">
+                    <input type="datetime" id="eventEnd" name="end" class="form-control" value="${dateStr}">
                 </div>
                 <div class="form-group">
                     <label for="eventDescription"><strong>Description:</strong></label>
                     <textarea id="eventDescription" name="description" class="form-control" placeholder="Description"></textarea>
                 </div>
                 <div class="form-group">
-                    <label><strong>Type:</strong></label><br>
-                    <input type="radio" id="eventTypePersonal" name="type" value="personal" required>
-                    <label for="eventTypePersonal">Personal</label>
-                    <input type="radio" id="eventTypeProject" name="type" value="project" required>
-                    <label for="eventTypeProject">Project</label>
-                    <input type="radio" id="eventTypeOrganization" name="type" value="organization" required>
-                    <label for="eventTypeOrganization">Organization</label>
+                    <label for="eventtype">Type</label>
+                    <select id="eventtype" name="type" required>
+                        <option value="personal" selected>Personal</option>
+                        <option value="project">Project</option>
+                        <option value="organization">Organization</option>
+                    </select>
+                </div>
+                <div class="badge-selection" id="badge-selection">
+                    <label>Badge</label><br>
+
+                    <!-- Personal-related badges -->
+                    <div id="badgepersonal" class="badge-group">
+                        <input type="radio" id="badge-personal-work" name="personal_badge" value="1">
+                        <label for="badge-personal-work">Work</label><br>
+
+                        <input type="radio" id="badge-personal-travel" name="personal_badge" value="2">
+                        <label for="badge-personal-travel">Travel</label><br>
+
+                        <input type="radio" id="badge-personal-appointment" name="personal_badge" value="3">
+                        <label for="badge-personal-appointment">Appointment</label><br>
+                    </div>
+
+                    <!-- Project-related badges -->
+                    <div id="badgeproject" class="badge-group">
+                        <input type="radio" id="badge-project-work" name="project_badge" value="1">
+                        <label for="badge-project-work">Work</label><br>
+
+                        <input type="radio" id="badge-project-travel" name="project_badge" value="2">
+                        <label for="badge-project-travel">Travel</label><br>
+
+                        <input type="radio" id="badge-project-appointment" name="project_badge" value="3">
+                        <label for="badge-project-appointment">Appointment</label><br>
+
+                        <input type="radio" id="badge-project-limited" name="project_badge" value="4">
+                        <label for="badge-project-limited">Limited</label><br>
+                    </div>
+
+                    <!-- Organization-related badges -->
+                    <div id="badgeorganization" class="badge-group">
+                        <input type="radio" id="badge-organization-work" name="organization_badge" value="1">
+                        <label for="badge-organization-work">Work</label><br>
+
+                        <input type="radio" id="badge-organization-travel" name="organization_badge" value="2">
+                        <label for="badge-organization-travel">Travel</label><br>
+
+                        <input type="radio" id="badge-organization-appointment" name="organization_badge" value="3">
+                        <label for="badge-organization-appointment">Appointment</label><br>
+
+                        <input type="radio" id="badge-organization-meeting" name="organization_badge" value="4" >
+                        <label for="badge-organization-meeting">Meeting</label><br>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label><strong>Status:</strong></label><br>
-                    <input type="radio" id="eventStatusActive" name="status" value="active" required>
+                    <input type="radio" id="eventStatusActive" name="status" value="active" required checked>
                     <label for="eventStatusActive">Active</label>
                     <input type="radio" id="eventStatusInactive" name="status" value="inactive" required>
                     <label for="eventStatusInactive">Inactive</label>
@@ -133,74 +214,128 @@ document.addEventListener('DOMContentLoaded', function () {
             </form>
         `;
 
+        // Initialize Flatpickr for start date and time
+        flatpickr("#eventStart", {
+            enableTime: true,
+            enableSeconds: true,          // Enable seconds picker
+            minDate: "today",
+            dateFormat: "Y/m/d H:i:S",    // Correct format for including seconds (Y for 4-digit year, H for 24-hour time)
+            time_24hr: true
+        });
+
+        // Initialize Flatpickr for end date and time
+        flatpickr("#eventEnd", {
+            enableTime: true,
+            enableSeconds: true,          // Enable seconds picker
+            minDate: "today",
+            dateFormat: "Y/m/d H:i:S",    // Correct format for including seconds (Y for 4-digit year, H for 24-hour time)
+            time_24hr: true
+        });
+
+        // Call the function immediately to display the correct badges on page load or modal open
+        updateBadgeVisibility();
+
+        // Optionally, if you still want to handle changes in the dropdown
+        $('#eventtype').change(function () {
+            updateBadgeVisibility();
+        });
+
+        $('#eventtype').val(selectedFilterType);
+        updateBadgeVisibility();
+
+        function getBadge() {
+            var badgeType = $('#eventtype').val(); // Get the selected type
+            if (badgeType === 'personal') {
+                var badge = $('input[name="personal_badge"]:checked').val();
+            } else if (badgeType === 'project') {
+                badge = $('input[name="project_badge"]:checked').val();
+            } else if (badgeType === 'organization') {
+                badge = $('input[name="organization_badge"]:checked').val();
+            }
+            return badge; // If no badge is selected
+        }
+
         // Show the modal and overlay
         modal.style.display = 'block';
         overlay.style.display = 'block';
 
+        // Handle form submission
         var eventForm = modal.querySelector('#eventForm');
         eventForm.addEventListener('submit', function (event) {
             event.preventDefault();
 
-            var eventForm = modal.querySelector('#eventForm');
-            eventForm.addEventListener('submit', function (event) {
-                event.preventDefault();
-
-                var formData = new FormData(eventForm);
-                var eventData = {
-                    title: formData.get('title'),
-                    start: formData.get('start'),
-                    end: formData.get('end'),
-                    description: formData.get('description'),
-                    type: formData.get('type'),
-                    status: formData.get('status')
-                };
-
-                // Send the form data to the server
-                $.ajax({
-                    url: 'insert.php',
-                    type: 'POST',
-                    data: JSON.stringify(eventData),
-                    contentType: 'application/json',
-                    success: function (response) {
-                        try {
-                            var res = JSON.parse(response);
-                            if (res.success) {
-                                alert('Event added successfully!');
-                                location.reload();
-                            } else {
-                                alert('Error adding event: ' + res.error);
-                            }
-                        } catch (e) {
-                            // alert('Error parsing response: ' + e.message);
-                            console.error(e);
-                            console.log(response);
-                            console.log(data);
+            var formData = new FormData(eventForm);
+            var eventData = {
+                title: formData.get('title'),
+                start: formData.get('start'),
+                end: formData.get('end'),
+                description: formData.get('description'),
+                type: formData.get('type'),
+                badge: getBadge(),
+                status: formData.get('status')
+            };
+            // Send the form data to the server
+            $.ajax({
+                url: 'insert.php',
+                type: 'POST',
+                data: JSON.stringify(eventData),
+                contentType: 'application/json',
+                success: function (response) {
+                    try {
+                        if (response.success) {
+                            alert('Event added successfully!');
+                            location.reload();
+                        } else {
+                            alert('Error adding event: ' + response.error);
                         }
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        alert('Error: ' + textStatus + ' - ' + errorThrown);
+                    } catch (e) {
+                        // alert('Error parsing response: ' + e.message);
+                        console.error(e);
                     }
-                });
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert('Error: ' + textStatus + ' - ' + errorThrown);
+                }
             });
-
         });
-
     }
-    // Format date to 'YYYY-MM-DDTHH:MM' (local time) for datetime-local input
-    function formatDateForBackend(date) {
-        const year = date.getFullYear();
-        const month = ('0' + (date.getMonth() + 1)).slice(-2); // Ensure 2 digits
-        const day = ('0' + date.getDate()).slice(-2);
-        const hours = ('0' + date.getHours()).slice(-2);
-        const minutes = ('0' + date.getMinutes()).slice(-2);
-        const seconds = ('0' + date.getSeconds()).slice(-2);
 
-        return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+    // Function to update badge visibility based on selected type
+    function updateBadgeVisibility() {
+        var selectedType = $('#eventtype').val();
+        // Hide all badge groups initially
+        $('.badge-group').attr("style", "display: none !important");
+
+        // Show relevant badge group based on selected event type
+        if (selectedType === 'personal') {
+            $('#badgepersonal').attr("style", "display: flex !important"); // Show Personal-related badges
+        } else if (selectedType === 'project') {
+            $('#badgeproject').attr("style", "display: flex !important"); // Show Project-related badges
+        } else if (selectedType === 'organization') {
+            $('#badgeorganization').attr("style",
+                "display: flex !important"); // Show Organization-related badges
+        }
     }
+
+    // // Format date to 'YYYY-MM-DDTHH:MM' (local time) for datetime-local input
+    // function formatDateForBackend(date) {
+    //     const year = date.getFullYear();
+    //     const month = ('0' + (date.getMonth() + 1)).slice(-2); // Ensure 2 digits
+    //     const day = ('0' + date.getDate()).slice(-2);
+    //     const hours = ('0' + date.getHours()).slice(-2);
+    //     const minutes = ('0' + date.getMinutes()).slice(-2);
+    //     const seconds = ('0' + date.getSeconds()).slice(-2);
+
+    //     return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+    // }
 
     function openEventPopup(event) {
         var modalContent = modal.querySelector('.modal-body');
         modal.querySelector('.modal-title').textContent = event.title;
+
+        // Format the event start and end dates in Y/m/d H:i:S
+        var formattedStart = flatpickr.formatDate(new Date(event.start), "Y/m/d H:i:S");
+        var formattedEnd = event.end ? flatpickr.formatDate(new Date(event.end), "Y/m/d H:i:S") : '';
 
         // Use the Y/M/D H:M:S format for text inputs
         modalContent.innerHTML = `
@@ -211,25 +346,68 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
                 <div class="form-group">
                     <label for="eventStart"><strong>Start Date:</strong></label>
-                    <input type="text" id="eventStart" name="start" class="form-control" value="${formatDateForBackend(new Date(event.start))}" required>
+                    <input type="datetime" id="eventStart" name="start" class="form-control" value="${formattedStart}" required>
                 </div>
                 <div class="form-group">
                     <label for="eventEnd"><strong>End Date:</strong></label>
-                    <input type="text" id="eventEnd" name="end" class="form-control" value="${event.end ? formatDateForBackend(new Date(event.end)) : ''}">
+                    <input type="datetime" id="eventEnd" name="end" class="form-control" value="${formattedEnd ? formattedEnd : ''}">
                 </div>
                 <div class="form-group">
                     <label for="eventDescription"><strong>Description:</strong></label>
                     <textarea id="eventDescription" name="description" class="form-control">${event.extendedProps.description || ''}</textarea>
                 </div>
+              
                 <div class="form-group">
-                        <label><strong>Type:</strong></label><br>
-                        <input type="radio" id="eventTypePersonal" name="type" value="personal" ${event.extendedProps.type === 'personal' ? 'checked' : ''}>
-                        <label for="eventTypePersonal">Personal</label>
-                        <input type="radio" id="eventTypeProject" name="type" value="project" ${event.extendedProps.type === 'project' ? 'checked' : ''}>
-                        <label for="eventTypeProject">Project</label>
-                        <input type="radio" id="eventTypeOrganization" name="type" value="organization" ${event.extendedProps.type === 'organization' ? 'checked' : ''}>
-                        <label for="eventTypeOrganization">Organization</label>
+                    <label for="eventtype"><strong>Type:</strong></label><br>
+                    <select id="eventtype" name="type" required>
+                        <option value="personal" ${event.extendedProps.type === 'personal' ? 'selected' : ''}>Personal</option>
+                        <option value="project" ${event.extendedProps.type === 'project' ? 'selected' : ''}>Project</option>
+                        <option value="organization" ${event.extendedProps.type === 'organization' ? 'selected' : ''}>Organization</option>
+                    </select>
                 </div>
+                <div class="badge-selection" id="badge-selection">
+                    <label for="eventbadge"><strong>Badge</strong></label><br>
+                        <!-- Personal-related badges -->
+                        <div id="badgepersonal" class="badge-group">
+                            <input type="radio" id="badge-personal-work" name="personal_badge" value="1" ${event.extendedProps.badge === '1' ? 'checked' : ''}>
+                            <label for="badge-personal-work">Work</label><br>
+                            <input type="radio" id="badge-personal-travel" name="personal_badge" value="2" ${event.extendedProps.badge === '2' ? 'checked' : ''}>
+                            <label for="badge-personal-travel">Travel</label><br>
+                            <input type="radio" id="badge-personal-appointment" name="personal_badge" value="3" ${event.extendedProps.badge === '3' ? 'checked' : ''}>
+                            <label for="badge-personal-appointment">Appointment</label><br>
+                        </div>
+
+                        <!-- Project-related badges -->
+                        <div id="badgeproject" class="badge-group">
+                            <input type="radio" id="badge-project-work" name="project_badge" value="1 ${event.extendedProps.badge === '1' ? 'checked' : ''}>
+                            <label for="badge-project-work">Work</label><br>
+
+                            <input type="radio" id="badge-project-travel" name="project_badge" value="2" ${event.extendedProps.badge === '2' ? 'checked' : ''}>
+                            <label for="badge-project-travel">Travel</label><br>
+
+                            <input type="radio" id="badge-project-appointment" name="project_badge" value="3" ${event.extendedProps.badge === '3' ? 'checked' : ''}>
+                            <label for="badge-project-appointment">Appointment</label><br>
+
+                        <input type="radio" id="badge-project-limited" name="project_badge" value="4" ${event.extendedProps.badge === '4' ? 'checked' : ''}>
+                        <label for="badge-project-limited">Limited</label><br>
+                    </div>
+
+                    <!-- Organization-related badges -->
+                    <div id="badgeorganization" class="badge-group">
+                        <input type="radio" id="badge-organization-work" name="organization_badge" value="1" ${event.extendedProps.badge === '1' ? 'checked' : ''}>
+                        <label for="badge-organization-work">Work</label><br>
+
+                        <input type="radio" id="badge-organization-travel" name="organization_badge" value="2"${event.extendedProps.badge === '2' ? 'checked' : ''}>
+                        <label for="badge-organization-travel">Travel</label><br>
+
+                        <input type="radio" id="badge-organization-appointment" name="organization_badge" value="3" ${event.extendedProps.badge === '3' ? 'checked' : ''}>
+                        <label for="badge-organization-appointment">Appointment</label><br>
+
+                        <input type="radio" id="badge-organization-meeting" name="organization_badge" value="4" ${event.extendedProps.badge === '4' ? 'checked' : ''}>
+                        <label for="badge-organization-meeting">Meeting</label><br>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="eventStatus"><strong>Status:</strong></label><br>
                     <input type="radio" id="eventStatusActive" name="status" value="active" ${event.extendedProps.status === 'active' ? 'checked' : ''}>
@@ -242,9 +420,35 @@ document.addEventListener('DOMContentLoaded', function () {
         </form>
         `;
 
+        // Call the function immediately to display the correct badges on page load or modal open
+        updateBadgeVisibility();
+
+        // Optionally, if you still want to handle changes in the dropdown
+        $('#eventtype').change(function () {
+            updateBadgeVisibility();
+        });
+
+        //Initialize flatpickr for start date
+        flatpickr("#eventStart", {
+            enableTime: true,
+            enableSeconds: true,          // Enable seconds picker
+            minDate: "today",
+            dateFormat: "Y/m/d H:i:S",    // Correct format for including seconds (Y for 4-digit year, H for 24-hour time)
+            time_24hr: true
+        });
+
+        //Initialize flatpickr for start date
+        flatpickr("#eventEnd", {
+            enableTime: true,
+            enableSeconds: true,          // Enable seconds picker
+            minDate: "today",
+            dateFormat: "Y/m/d H:i:S",    // Correct format for including seconds (Y for 4-digit year, H for 24-hour time)
+            time_24hr: true
+        });
+
         $('#updateForm').on('submit', function (e) {
             e.preventDefault();
-
+            var type = $('#eventtype').val();
             // Collect data and ensure it's in the 'Y/M/D H:M:S' format
             var updatedEvent = {
                 id: event.id,
@@ -252,7 +456,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 start: document.getElementById('eventStart').value,  // In 'Y/M/D H:M:S' format
                 end: document.getElementById('eventEnd').value || null,
                 description: document.getElementById('eventDescription').value,
-                type: document.querySelector('input[name="type"]:checked').value,
+                type: $('#eventtype').val(),
+                badge: getBadge(),
                 status: document.querySelector('input[name="status"]:checked').value
             };
 
@@ -277,8 +482,36 @@ document.addEventListener('DOMContentLoaded', function () {
             modal.style.display = 'none';
         }
     };
+
+    function getBadge() {
+        var badgeType = $('#eventtype').val(); // Get the selected type
+        if (badgeType === 'personal') {
+            var badge = $('input[name="personal_badge"]:checked').val();
+        } else if (badgeType === 'project') {
+            badge = $('input[name="project_badge"]:checked').val();
+        } else if (badgeType === 'organization') {
+            badge = $('input[name="organization_badge"]:checked').val();
+        }
+        return badge; // If no badge is selected
+    }
 });
 
+function updateBadgeVisibility() {
+    var selectedType = $('#eventtype').val();
+    // Hide all badge groups initially
+    $('.badge-group').attr("style", "display: none !important");
+    // Show relevant badge group based on selected event type
+    if (selectedType === 'personal') {
+        $('#badgepersonal').attr("style", "display: flex !important"); // Show Personal-related badges
+    } else if (selectedType === 'project') {
+        $('#badgeproject').attr("style", "display: flex !important"); // Show Project-related badges
+    } else if (selectedType === 'organization') {
+        $('#badgeorganization').attr("style",
+            "display: flex !important"); // Show Organization-related badges
+    }
+}
+
+// Update the event on the server
 function updateEvent(updatedEvent) {
     $.ajax({
         url: 'update.php',  // Your API endpoint for updating events
@@ -304,6 +537,7 @@ function updateEvent(updatedEvent) {
     });
 }
 
+// Delete the event on the server
 function deleteEvent(eventId) {
     $.ajax({
         url: 'delete.php',  // Your API endpoint for deleting events
@@ -329,19 +563,64 @@ function deleteEvent(eventId) {
     });
 }
 
-function loadEvents(calendar) {
+// Get all buttons inside the filter-events
+const buttons = document.querySelectorAll('#filter-events .btn');
+const events = document.querySelectorAll('#events-list .event');
+
+buttons.forEach(button => {
+    button.addEventListener('click', () => {
+        const eventType = button.getAttribute('data-type');
+        const url = new URL(window.location.href);
+        if (eventType === 'all') {
+            url.searchParams.delete('eventType'); // Remove the eventType parameter
+            window.history.pushState({}, '', url); // Update the URL without reloading the page
+            location.reload(); // Refresh the page
+        } else {
+            const quotedEventType = `"${eventType}"`; // Add quotes around the value
+            url.searchParams.set('eventType', quotedEventType); // Update the eventType parameter
+            window.history.pushState({}, '', url); // Update the URL without reloading the page
+        }
+        // Display events based on the selected type
+        filterEvents(eventType);
+    });
+});
+
+function filterEvents(eventType) {
+    events.forEach(event => {
+        if (eventType === 'all' || event.getAttribute('data-type') === eventType) {
+            event.style.display = ''; // Show the event
+        } else {
+            event.style.display = 'none'; // Hide the event
+        }
+    });
+}
+// Load events from the server
+function loadEvents(calendar, eventType = null) {
     $.ajax({
         url: './fetch.php',
         method: 'GET',
+        data: { eventType: eventType },
         dataType: 'json',
         success: function (data) {
-            calendar.addEventSource(data);
+            const params = new URLSearchParams(window.location.search);
+            const urleventType = params.get('eventType') ? JSON.parse(params.get('eventType')) : null;
+            // Determine the effective event type to filter by
+            const effectiveEventType = eventType || urleventType;
+
+            let filteredEvents = data.filter(function (event) {
+                return !effectiveEventType || event.extendedProps.type === effectiveEventType;
+            });
+
+            calendar.removeAllEventSources();
+            calendar.addEventSource(filteredEvents);
         },
         error: function (xhr, status, error) {
             console.error('Error loading calendar events:', error);
         }
     });
 }
+
+// Load external events from the server
 function loadExternalEvents() {
     $.ajax({
         url: './list.php',
@@ -362,30 +641,56 @@ function loadExternalEvents() {
     });
 }
 
+// Initialize Flatpickr for start date and time
 flatpickr("#startDateTime", {
     enableTime: true,
+    enableSeconds: true,          // Enable seconds picker
     minDate: "today",
-    dateFormat: "y/m/d H:i", // Your preferred format (MM/DD/YYYY and 24-hour time)
-    time_24hr: true
+    dateFormat: "Y/m/d H:i:S",    // Correct format for including seconds (Y for 4-digit year, H for 24-hour time)
+    time_24hr: true               // Enable 24-hour time format
 });
 
 // Initialize Flatpickr for end date and time
 flatpickr("#endDateTime", {
     enableTime: true,
+    enableSeconds: true,          // Enable seconds picker
     minDate: "today",
-    dateFormat: "y/m/d H:i",
-    time_24hr: true
+    dateFormat: "Y/m/d H:i:S",    // Correct format for including seconds (Y for 4-digit year, H for 24-hour time)
+    time_24hr: true               // Enable 24-hour time format
 });
 
+// Handle dropdown change event
+$(document).ready(function () {
+    $('#eventtype').on('change', function () {
+        var selectedType = $(this).val();
+        // Hide all badge groups initially
+        $('.badge-group').attr("style", "display: none !important");
+        // Show relevant badge group based on selected event type
+        if (selectedType === 'personal') {
+            $('#badge-personal').attr("style",
+                "display: flex !important"); // Show Personal-related badges
+        } else if (selectedType === 'project') {
+            $('#badge-project').attr("style",
+                "display: flex !important"); // Show Project-related badges
+        } else if (selectedType === 'organization') {
+            $('#badge-organization').attr("style",
+                "display: flex !important"); // Show Organization-related badges
+        }
+    });
+});
+
+// Handle form submission
 $(document).ready(function () {
     $('#eventForm').on('submit', function (e) {
         e.preventDefault();
+        var eventType = $('#event-type').val();
         var eventData = {
             title: $('#title').val(),
             start: $('#startDateTime').val(),
             end: $('#endDateTime').val(),
             description: $('#description').val(),
-            type: $('input[name="type"]:checked').val(),
+            type: eventType,
+            badge: getSelectedBadge(),
             status: $('input[name="status"]:checked').val()
         };
         $.ajax({
@@ -393,20 +698,18 @@ $(document).ready(function () {
             type: 'POST',
             data: JSON.stringify(eventData),
             contentType: 'application/json',
+
             success: function (response) {
                 try {
-                    var res = JSON.parse(response);
-                    if (res.success) {
+                    if (response.success) {
                         alert('Event added successfully!');
                         location.reload();
                     } else {
                         alert('Error adding event: ' + res.error);
                     }
                 } catch (e) {
-                    // alert('Error parsing response: ' + e.message);
-                    console.error(e);
-                    console.log(response);
-                    console.log(data);
+                    console.error('Error parsing JSON:', e);
+                    console.log('Server response:', response);
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {
@@ -416,9 +719,22 @@ $(document).ready(function () {
     });
 });
 
+// Function to get the selected badge
+function getSelectedBadge() {
+    var badgeType = $('#event-type').val(); // Get the selected type
+    if (badgeType === 'personal') {
+        var badge = $('input[name="personal_badge"]:checked').val();
+    } else if (badgeType === 'project') {
+        badge = $('input[name="project_badge"]:checked').val();
+    } else if (badgeType === 'organization') {
+        badge = $('input[name="organization_badge"]:checked').val();
+    }
+    return badge; // If no badge is selected
+}
+
+// Add popup modal when ADD EVENT button is clicked
 $(document).ready(function () {
     const $overlay = $('#overlay');
-
     $('[data-modal-target]').on('click', function () {
         const modalSelector = $(this).data('modal-target');
         const $modal = $(modalSelector);
@@ -448,4 +764,5 @@ $(document).ready(function () {
         $overlay.removeClass('active');
     }
 });
+
 

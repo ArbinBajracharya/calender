@@ -16,9 +16,10 @@ if (isset($event['id']) && isset($event['title']) && isset($event['start'])) {
     $end = isset($event['end']) ? $conn->real_escape_string($event['end']) : null;
     $description = $conn->real_escape_string($event['description']);
     $type = $conn->real_escape_string($event['type']);
+    $badge = $conn->real_escape_string($event['badge']);
     $status = $conn->real_escape_string($event['status']);
 
-    $sql = "UPDATE events SET title='$title', start='$start', end='$end', description='$description', type='$type', status='$status' WHERE id='$id'";
+    $sql = "UPDATE events SET title='$title', start='$start', end='$end', description='$description', type='$type',badge='$badge', status='$status' WHERE id='$id'";
 
     if ($conn->query($sql) === TRUE) {
         echo json_encode(['success' => true]);

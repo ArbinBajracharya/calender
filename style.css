@@ -228,6 +228,17 @@ form#updateForm button#deleteEventBtn:hover {
   background-color: #c9302c;
 }
 
+.event-form select,
+.form-group select {
+  width: 100%; /* Full width */
+  padding: 10px; /* Padding for better touch target */
+  border: 1px solid #ccc; /* Light border */
+  border-radius: 4px; /* Rounded corners */
+  background-color: #f9f9f9; /* Light background */
+  font-size: 16px; /* Font size */
+  transition: border-color 0.3s; /* Smooth transition for border color */
+}
+
 .fc-event-personal {
   background-color: #2ecc71 !important; /* Green */
   border-color: #2ecc71 !important;
@@ -252,4 +263,22 @@ form#updateForm button#deleteEventBtn:hover {
   height: 8px; /* Adjust size as needed */
   width: 8px; /* Adjust size as needed */
   margin: 0px 4px;
+}
+
+.badge {
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: white;
+  font-size: 14px;
+}
+
+.table {
+  position: fixed;
+  z-index: 2;
+  top: 250px;
+  left: 20px;
+  width: 150px;
+  padding: 0 10px;
+  border: 1px solid #ccc;
+  background: #eee;
 }

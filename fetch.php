@@ -4,7 +4,7 @@ require_once 'connect.php';
 header('Content-Type: application/json');
 
 // SQL query to select the required fields
-$sql = "SELECT id, title, start, end, description, type, status FROM events";
+$sql = "SELECT id, title, start, end, description, type, badge, status FROM events";
 $result = $conn->query($sql);
 $events = array();
 
@@ -19,6 +19,7 @@ if ($result->num_rows > 0) {
             'extendedProps' => array(
                 'description' => $row['description'],
                 'type' => $row['type'],
+                'badge' => $row['badge'],
                 'status' => $row['status']
             )
         );
