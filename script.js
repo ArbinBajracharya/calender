@@ -73,9 +73,9 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         eventMouseEnter: function (info) {
             // Create and show a tooltip with the event title and description
-            let tooltipContent = '<div><strong>' + info.event.title + '</strong></div>';
+            let tooltipContent = '<div class="hovertitle"><strong>' + info.event.title + '</strong></div>';
             if (info.event.extendedProps.description) {
-                tooltipContent += '<div>' + info.event.extendedProps.description + '</div>';
+                tooltipContent += '<div class="hoverdesc">' + info.event.extendedProps.description + '</div>';
             }
 
             let tooltip = $('<div class="fc-tooltip">' + tooltipContent + '</div>');
@@ -119,31 +119,31 @@ document.addEventListener('DOMContentLoaded', function () {
     loadExternalEvents();
     loadEvents(calendar);
 
-    function openCustomModal(eventTitle, eventDescription, eventElement) {
-        var modal = document.getElementById('eventHoverModal');
-        var modalLabel = document.getElementById('eventModalLabel');
-        var modalDescription = document.getElementById('eventDescription');
+    // function openCustomModal(eventTitle, eventDescription, eventElement) {
+    //     var modal = document.getElementById('eventHoverModal');
+    //     var modalLabel = document.getElementById('eventModalLabel');
+    //     var modalDescription = document.getElementById('eventDescription');
 
-        // Set the content of the modal
-        modalLabel.textContent = eventTitle;
-        modalDescription.textContent = eventDescription;
+    //     // Set the content of the modal
+    //     modalLabel.textContent = eventTitle;
+    //     modalDescription.textContent = eventDescription;
 
-        // Get the event element's position
-        var rect = eventElement.getBoundingClientRect();
+    //     // Get the event element's position
+    //     var rect = eventElement.getBoundingClientRect();
 
-        // Position the modal near the event
-        modal.style.top = (rect.top + window.scrollY - modal.offsetHeight - 10) + 'px'; // 10px above the event
-        modal.style.left = (rect.left + window.scrollX + (rect.width / 2) - (modal.offsetWidth / 2)) + 'px';
+    //     // Position the modal near the event
+    //     modal.style.top = (rect.top + window.scrollY - modal.offsetHeight - 10) + 'px'; // 10px above the event
+    //     modal.style.left = (rect.left + window.scrollX + (rect.width / 2) - (modal.offsetWidth / 2)) + 'px';
 
-        // Show the modal
-        modal.style.display = 'block';
-    }
+    //     // Show the modal
+    //     modal.style.display = 'block';
+    // }
 
-    // Function to close the modal
-    function closeCustomModal() {
-        var modal = document.getElementById('eventHoverModal');
-        modal.style.display = 'none';
-    }
+    // // Function to close the modal
+    // function closeCustomModal() {
+    //     var modal = document.getElementById('eventHoverModal');
+    //     modal.style.display = 'none';
+    // }
 
     //Filter events by type
     $('#filter-events button').on('click', function () {

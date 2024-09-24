@@ -210,7 +210,7 @@
         </div>
     </div>
 
-    <div id="eventHoverModal" class="custom-popup-modal">
+    <!-- <div id="eventHoverModal" class="custom-popup-modal">
         <div class="custom-popup-content">
             <div class="custom-popup-header">
                 <h5 id="eventModalLabel">Event Name</h5>
@@ -219,7 +219,7 @@
                 <p id="eventDescription">Event Description</p>
             </div>
         </div>
-    </div>
+    </div> -->
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js">
     </script>

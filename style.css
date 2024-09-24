@@ -269,25 +269,33 @@ form#updateForm button#deleteEventBtn:hover {
   position: absolute;
   background-color: #fff;
   color: #333;
-  padding: 15px;
   border-radius: 8px;
   font-size: 14px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   border: 1px solid #ddd;
   pointer-events: none;
-  z-index: 10001;
+  z-index: 10;
   width: 250px; /* Set a width to resemble a modal size */
 }
 
 .fc-tooltip strong {
   display: block;
-  font-size: 16px;
+  font-size: 20px;
+  font-weight: bold;
   margin-bottom: 8px;
 }
 
+.hovertitle {
+  background-color: aqua;
+  padding: 5px;
+}
+
+.hoverdesc {
+  padding: 10px;
+}
+
 .fc-tooltip div {
-  font-size: 14px;
-  color: #666;
+  font-size: 15px;
 }
 
 .custom-popup-modal {
