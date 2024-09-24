@@ -379,7 +379,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function openEventPopup(event) {
         var modalContent = modal.querySelector('.modal-body');
-        modal.querySelector('.modal-title').textContent = event.title;
+        modal.querySelector('.modal-title').textContent = "Update Event";
 
         // Format the event start and end dates in Y/m/d H:i:S
         var formattedStart = flatpickr.formatDate(new Date(event.start), "Y/m/d H:i:S");
