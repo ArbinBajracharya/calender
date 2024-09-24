@@ -71,6 +71,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 info.el.style.display = 'none';
             }
         },
+        eventMouseEnter: function (info) {
+            // Create and show a tooltip with the event title and description
+            let tooltipContent = '<div><strong>' + info.event.title + '</strong></div>';
+            if (info.event.extendedProps.description) {
+                tooltipContent += '<div>' + info.event.extendedProps.description + '</div>';
+            }
+
+            let tooltip = $('<div class="fc-tooltip">' + tooltipContent + '</div>');
+            $('body').append(tooltip);
+
+            // Position the tooltip near the mouse cursor
+            $(document).on('mousemove', function (e) {
+                tooltip.css({
+                    top: e.pageY + 10,  // Slightly below the cursor
+                    left: e.pageX + 10  // Slightly to the right of the cursor
+                });
+            });
+        },
+        eventMouseLeave: function (info) {
+            // Remove the tooltip when the mouse leaves the event
+            $('.fc-tooltip').remove();
+        },
         eventClick: function (info) {
             openEventPopup(info.event);
         },
@@ -96,6 +118,32 @@ document.addEventListener('DOMContentLoaded', function () {
     calendar.render();
     loadExternalEvents();
     loadEvents(calendar);
+
+    function openCustomModal(eventTitle, eventDescription, eventElement) {
+        var modal = document.getElementById('eventHoverModal');
+        var modalLabel = document.getElementById('eventModalLabel');
+        var modalDescription = document.getElementById('eventDescription');
+
+        // Set the content of the modal
+        modalLabel.textContent = eventTitle;
+        modalDescription.textContent = eventDescription;
+
+        // Get the event element's position
+        var rect = eventElement.getBoundingClientRect();
+
+        // Position the modal near the event
+        modal.style.top = (rect.top + window.scrollY - modal.offsetHeight - 10) + 'px'; // 10px above the event
+        modal.style.left = (rect.left + window.scrollX + (rect.width / 2) - (modal.offsetWidth / 2)) + 'px';
+
+        // Show the modal
+        modal.style.display = 'block';
+    }
+
+    // Function to close the modal
+    function closeCustomModal() {
+        var modal = document.getElementById('eventHoverModal');
+        modal.style.display = 'none';
+    }
 
     //Filter events by type
     $('#filter-events button').on('click', function () {
@@ -415,8 +463,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     <input type="radio" id="eventStatusInactive" name="status" value="inactive" ${event.extendedProps.status === 'inactive' ? 'checked' : ''}>
                     <label for="eventStatusInactive">Inactive</label>
                 </div>
-            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="submit" class="btn btn-primary">Update Changes</button>
             <button type="button" id="deleteEventBtn" class="btn btn-danger">Delete Event</button>
+            <button type="button" id="discardBtn" class="btn btn-danger">Discard</button>
         </form>
         `;
 
@@ -469,6 +518,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (confirm('Are you sure you want to delete this event?')) {
                 deleteEvent(event.id);
             }
+        });
+        $('#discardBtn').on('click', function () {
+            modal.style.display = 'none';
         });
         modal.style.display = 'block';
     }

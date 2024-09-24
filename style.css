@@ -208,7 +208,7 @@ form#updateForm button[type="button"] {
   background-color: #5cb85c;
   color: white;
   border: none;
-  padding: 12px 20px;
+  padding: 10px 15px;
   font-size: 16px;
   border-radius: 4px;
   cursor: pointer;
@@ -263,6 +263,60 @@ form#updateForm button#deleteEventBtn:hover {
   height: 8px; /* Adjust size as needed */
   width: 8px; /* Adjust size as needed */
   margin: 0px 4px;
+}
+
+.fc-tooltip {
+  position: absolute;
+  background-color: #fff;
+  color: #333;
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 14px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border: 1px solid #ddd;
+  pointer-events: none;
+  z-index: 10001;
+  width: 250px; /* Set a width to resemble a modal size */
+}
+
+.fc-tooltip strong {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.fc-tooltip div {
+  font-size: 14px;
+  color: #666;
+}
+
+.custom-popup-modal {
+  display: none; /* Hidden by default */
+  position: absolute;
+  z-index: 1000;
+  background-color: #fff;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 250px;
+}
+
+/* Modal Header */
+.custom-popup-header {
+  margin-bottom: 10px;
+}
+
+/* Modal Title */
+.custom-popup-header h5 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Modal Body */
+.custom-popup-body {
+  font-size: 14px;
+  color: #333;
 }
 
 .badge {

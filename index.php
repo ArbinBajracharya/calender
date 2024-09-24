@@ -210,6 +210,17 @@
         </div>
     </div>
 
+    <div id="eventHoverModal" class="custom-popup-modal">
+        <div class="custom-popup-content">
+            <div class="custom-popup-header">
+                <h5 id="eventModalLabel">Event Name</h5>
+            </div>
+            <div class="custom-popup-body">
+                <p id="eventDescription">Event Description</p>
+            </div>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js">
     </script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
@@ -221,46 +232,46 @@
     <script src="script.js">
     </script>
     <script>
-        // Function to update badge visibility based on selected type and Filter type
-        $(document).ready(function() {
-            // Function to update badge visibility based on selected type
-            function updateBadgeVisibility() {
-                var selectedType = $('#event-type').val();
+    // Function to update badge visibility based on selected type and Filter type
+    $(document).ready(function() {
+        // Function to update badge visibility based on selected type
+        function updateBadgeVisibility() {
+            var selectedType = $('#event-type').val();
 
-                // Hide all badge groups initially
-                $('.badge-group').attr("style", "display: none !important");
+            // Hide all badge groups initially
+            $('.badge-group').attr("style", "display: none !important");
 
-                // Show relevant badge group based on selected event type
-                if (selectedType === 'personal') {
-                    $('#badge-personal').attr("style", "display: flex !important"); // Show Personal-related badges
-                } else if (selectedType === 'project') {
-                    $('#badge-project').attr("style", "display: flex !important"); // Show Project-related badges
-                } else if (selectedType === 'organization') {
-                    $('#badge-organization').attr("style",
-                        "display: flex !important"); // Show Organization-related badges
-                }
+            // Show relevant badge group based on selected event type
+            if (selectedType === 'personal') {
+                $('#badge-personal').attr("style", "display: flex !important"); // Show Personal-related badges
+            } else if (selectedType === 'project') {
+                $('#badge-project').attr("style", "display: flex !important"); // Show Project-related badges
+            } else if (selectedType === 'organization') {
+                $('#badge-organization').attr("style",
+                    "display: flex !important"); // Show Organization-related badges
             }
+        }
 
-            // Call the function immediately to display the correct badges on page load or modal open
+        // Call the function immediately to display the correct badges on page load or modal open
+        updateBadgeVisibility();
+
+        //To handle changes in the dropdown
+        $('#event-type').change(function() {
             updateBadgeVisibility();
-
-            //To handle changes in the dropdown
-            $('#event-type').change(function() {
-                updateBadgeVisibility();
-            });
-
-            //handle button clicks to set the select value
-            $('#filter-events .btn').on('click', function() {
-                const type = $(this).data('type');
-                if (type === 'all') {
-                    selectedFilterType = 'personal'; // Set to 'personal' when "All" is clicked
-                } else {
-                    selectedFilterType = type;
-                }
-                $('#event-type').val(selectedFilterType); // Set the dropdown value
-                updateBadgeVisibility();
-            });
         });
+
+        //handle button clicks to set the select value
+        $('#filter-events .btn').on('click', function() {
+            const type = $(this).data('type');
+            if (type === 'all') {
+                selectedFilterType = 'personal'; // Set to 'personal' when "All" is clicked
+            } else {
+                selectedFilterType = type;
+            }
+            $('#event-type').val(selectedFilterType); // Set the dropdown value
+            updateBadgeVisibility();
+        });
+    });
     </script>
 </body>
 
