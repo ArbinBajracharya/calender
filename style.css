@@ -26,9 +26,21 @@
   justify-content: space-between;
 }
 .right-align {
+  display: flex;
   text-align: right;
   margin-right: 20px;
 }
+.view-events .btn {
+  margin-right: 10px;
+  background-color: #3498db;
+}
+
+#add-events .btn {
+  margin-right: 10px;
+  background-color: #6dffec;
+  color: white;
+}
+
 .left-align {
   text-align: left;
   margin-left: 300px;

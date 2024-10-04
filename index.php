@@ -18,12 +18,14 @@
                 <button class="btn fc-event-project" data-type="project">Project</button>
                 <button class="btn fc-event-organization" data-type="organization">Organization</button>
             </div>
-            <div class="view-events">
-                <button class="btn" id="view-events"><a href="table.php" style="text-decoration:none;color:black">View
-                        Events</a></button>
-            </div>
-            <div id="add-events" class="right-align">
-                <button data-modal-target="#modal" class="btn">Add Event</button>
+            <div class="right-align">
+                <div class="view-events">
+                    <button class="btn" id="viewTableBtn">View
+                        Events</button>
+                </div>
+                <div id="add-events">
+                    <button data-modal-target="#modal" class="btn">Add Event</button>
+                </div>
             </div>
         </div>
         <div class="modal" id="modal">
@@ -35,19 +37,23 @@
                 <form class="form" id="eventForm" method="post">
                     <div class="event-form">
                         <label>Name:</label>
-                        <input type="text" id="title" name="title" placeholder="Event Name" required>
+                        <input type="text" id="title" name="title" placeholder="Event Name">
+                        <span class="error-message" id="title-error" style="color: red;"></span>
                     </div>
                     <div class="event-form">
                         <label>Start Date:</label>
-                        <input type="datetime" id="startDateTime" name="start" placeholder="Start Date" required>
+                        <input type="datetime" id="startDateTime" name="start" placeholder="Start Date">
+                        <span class="error-message" id="startDateTime-error" style="color: red;"></span>
                     </div>
                     <div class="event-form">
                         <label>End Date:</label>
                         <input type="datetime" id="endDateTime" name="end" placeholder="End Date">
+                        <span class="error-message" id="endDateTime-error" style="color: red;"></span>
                     </div>
                     <div class="event-form">
                         <label>Description</label>
                         <textarea name="description" id="description" placeholder="Description"></textarea>
+                        <span class="error-message" id="description-error" style="color: red;"></span>
                     </div>
                     <div class="event-form">
                         <label for="event-type">Type</label><br>
@@ -56,6 +62,7 @@
                             <option value="project">Project</option>
                             <option value="organization">Organization</option>
                         </select>
+                        <span class="error-message" id="event-type-error" style="color: red;"></span>
                     </div><br>
                     <div class="badge-selection" id="badge-selection">
                         <label>Badge</label><br>
@@ -106,6 +113,7 @@
                         <label>Status</label><br>
                         <input type="radio" name="status" value="active" required checked>Active
                         <input type="radio" name="status" value="inactive" required>Inactive
+                        <span class="error-message" id="status-error" style="color: red;"></span>
                     </div>
                     <button type="submit" id="insert" name="submit">Add Event</button>
                 </form>
@@ -231,6 +239,8 @@
     </script> -->
     <script src="script.js">
     </script>
+    <script src="retrive.js">
+    </script>
     <script>
     // Function to update badge visibility based on selected type and Filter type
     $(document).ready(function() {
@@ -276,3 +286,7 @@
 </body>
 
 </html>
+
+<?php
+$a = 0; 
+?>

@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
     let eventType = null;
-    var eventTable = $('#eventTable').DataTable();
     var calendarEl = document.getElementById('calendar');
     var containerEl = document.getElementById('external-events');
     var modal = document.getElementById('eventModal'); // Add this line to get the modal element
@@ -28,16 +27,16 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         editable: true,
         droppable: true,
-        drop: function (info) {
-            info.draggedEl.parentNode.removeChild(info.draggedEl);
-        },
+        // drop: function (info) {
+        //     info.draggedEl.parentNode.removeChild(info.draggedEl);
+        // },
         eventDrop: function (info) {
             // Automatically update the event when it's dragged and dropped
             var updatedEvent = {
                 id: info.event.id,
                 title: info.event.title,
-                start: info.event.start ? info.event.start.toISOString() : null,
-                end: info.event.end ? info.event.end.toISOString() : null,
+                start: formatDate(info.event.start) ? formatDate(info.event.start) : null,
+                end: info.event.end ? formatDate(info.event.end) : null,
                 description: info.event.extendedProps.description,
                 type: info.event.extendedProps.type,
                 badge: info.event.extendedProps.badge,
@@ -49,11 +48,13 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         eventResize: function (info) {
             // Automatically update the event when it's resized
+            var startdate = formatDate(info.event.start);
+            var enddate = formatDate(info.event.end);
             var updatedEvent = {
                 id: info.event.id,
                 title: info.event.title,
-                start: info.event.start ? info.event.start.toISOString() : null,
-                end: info.event.end ? info.event.end.toISOString() : null,
+                start: startdate ? startdate : null,
+                end: enddate ? enddate : null,
                 description: info.event.extendedProps.description,
                 type: info.event.extendedProps.type,
                 badge: info.event.extendedProps.badge,
@@ -97,7 +98,14 @@ document.addEventListener('DOMContentLoaded', function () {
             openEventPopup(info.event);
         },
         dateClick: function (info) {
-            openDateModal(info.dateStr);
+            // Prevent clicking on past dates
+            var clickedDate = new Date(info.dateStr);
+            var today = new Date();
+            today.setHours(0, 0, 0, 0); // Remove time part for comparison
+
+            if (clickedDate >= today) {
+                openDateModal(info.dateStr); // Allow future dates to open the modal
+            }
         },
         eventClassNames: function (info) {
             var extendedProps = info.event.extendedProps; // Access the extendedProps object
@@ -116,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     calendar.render();
-    loadExternalEvents();
+    // loadExternalEvents();
     loadEvents(calendar);
 
     // function openCustomModal(eventTitle, eventDescription, eventElement) {
@@ -184,19 +192,23 @@ document.addEventListener('DOMContentLoaded', function () {
             <form id="eventForm">
                 <div class="form-group">
                     <label for="eventTitle"><strong>Title:</strong></label>
-                    <input type="text" id="eventTitle" name="title" class="form-control" placeholder="Event Name" required>
+                    <input type="text" id="eventTitle" name="title" class="form-control" placeholder="Event Name">
+                    <span class="errormessage" id="titleerror" style="color: red;"></span>
                 </div>
                 <div class="form-group">
                     <label for="eventStart"><strong>Start Date:</strong></label>
-                    <input type="datetime" id="eventStart" name="start" class="form-control" value="${dateStr}" required>
+                    <input type="datetime" id="eventStart" name="start" class="form-control" value="${dateStr}" readonly required>
+                    <span class="errormessage" id="startDateTimeerror" style="color: red;"></span>
                 </div>
                 <div class="form-group">
                     <label for="eventEnd"><strong>End Date:</strong></label>
-                    <input type="datetime" id="eventEnd" name="end" class="form-control" value="${dateStr}">
+                    <input type="datetime" id="eventEnd" name="end" class="form-control" value="${dateStr}" required>
+                    <span class="errormessage" id="endDateTimeerror" style="color: red;"></span>
                 </div>
                 <div class="form-group">
                     <label for="eventDescription"><strong>Description:</strong></label>
                     <textarea id="eventDescription" name="description" class="form-control" placeholder="Description"></textarea>
+                    <span class="errormessage" id="descriptionerror" style="color: red;"></span>
                 </div>
                 <div class="form-group">
                     <label for="eventtype">Type</label>
@@ -205,6 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <option value="project">Project</option>
                         <option value="organization">Organization</option>
                     </select>
+                    <span class="errormessage" id="eventtypeerror" style="color: red;"></span>
                 </div>
                 <div class="badge-selection" id="badge-selection">
                     <label>Badge</label><br>
@@ -263,21 +276,32 @@ document.addEventListener('DOMContentLoaded', function () {
         `;
 
         // Initialize Flatpickr for start date and time
-        flatpickr("#eventStart", {
+        var startPicker = flatpickr("#eventStart", {
+            defaultDate: dateStr,            // Set clicked date as the default
             enableTime: true,
-            enableSeconds: true,          // Enable seconds picker
-            minDate: "today",
-            dateFormat: "Y/m/d H:i:S",    // Correct format for including seconds (Y for 4-digit year, H for 24-hour time)
-            time_24hr: true
+            enableSeconds: true,
+            minDate: dateStr,
+            maxDate: dateStr,                // Prevent selecting dates earlier than the clicked date
+            dateFormat: "Y/m/d H:i:S",
+            time_24hr: true,
+            onChange: function (selectedDates, dateStr) {
+                // Update the end date's minDate to match the selected start date & time
+                endPicker.set('minDate', dateStr);
+            }
         });
 
         // Initialize Flatpickr for end date and time
-        flatpickr("#eventEnd", {
+        var endPicker = flatpickr("#eventEnd", {
             enableTime: true,
             enableSeconds: true,          // Enable seconds picker
-            minDate: "today",
+            minDate: dateStr,
             dateFormat: "Y/m/d H:i:S",    // Correct format for including seconds (Y for 4-digit year, H for 24-hour time)
             time_24hr: true
+        });
+        startPicker.config.onChange.push(function (selectedDates, dateStr) {
+            var startDateTime = selectedDates[0];
+            // Update the minDate for the endPicker to ensure the end date/time is after the start
+            endPicker.set('minDate', startDateTime);
         });
 
         // Call the function immediately to display the correct badges on page load or modal open
@@ -311,6 +335,10 @@ document.addEventListener('DOMContentLoaded', function () {
         var eventForm = modal.querySelector('#eventForm');
         eventForm.addEventListener('submit', function (event) {
             event.preventDefault();
+
+            if (!clickvalidateForm()) {
+                return false;
+            }
 
             var formData = new FormData(eventForm);
             var eventData = {
@@ -346,6 +374,46 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
         });
+
+        function clickvalidateForm() {
+            var isValid = true;
+
+            // Validate Title
+            if ($('#eventTitle').val() === '') {
+                isValid = false;
+                $('#titleerror').html('Title is required.');
+            }
+
+            // Validate Start Date
+            if ($('#eventStart').val() === '') {
+                isValid = false;
+                $('#startDateTimeerror').html('Start Date is required.');
+            }
+            // Validate Start Date
+            if ($('#eventEnd').val() === '') {
+                isValid = false;
+                $('#endDateTimeerror').html('End Date is required.');
+            }
+
+            if ($('#eventDescription').val() === '') {
+                isValid = false;
+                $('#descriptionerror').html('Description is required.');
+            }
+
+            // Validate Event Type
+            if ($('#eventtype').val() === '') {
+                isValid = false;
+                $('#eventtypeerror').html('Event Type is required.');
+            }
+
+            // Validate Badge (if required)
+            if (!getSelectedBadge()) {
+                isValid = false;
+                $('#badge-selection').append('<span class="error-message" style="color: red;">Badge is required.</span>');
+            }
+
+            return isValid;
+        }
     }
 
     // Function to update badge visibility based on selected type
@@ -478,21 +546,30 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         //Initialize flatpickr for start date
-        flatpickr("#eventStart", {
+        var startPicker = flatpickr("#eventStart", {
             enableTime: true,
-            enableSeconds: true,          // Enable seconds picker
+            enableSeconds: true,
             minDate: "today",
-            dateFormat: "Y/m/d H:i:S",    // Correct format for including seconds (Y for 4-digit year, H for 24-hour time)
-            time_24hr: true
+            dateFormat: "Y/m/d H:i:S",
+            time_24hr: true,
+            onChange: function (selectedDates, dateStr) {
+                // Update the end date's minDate to match the selected start date & time
+                endPicker.set('minDate', dateStr);
+            }
         });
 
         //Initialize flatpickr for start date
-        flatpickr("#eventEnd", {
+        var endPicker = flatpickr("#eventEnd", {
             enableTime: true,
             enableSeconds: true,          // Enable seconds picker
-            minDate: "today",
+            minDate: formattedStart,
             dateFormat: "Y/m/d H:i:S",    // Correct format for including seconds (Y for 4-digit year, H for 24-hour time)
             time_24hr: true
+        });
+        startPicker.config.onChange.push(function (selectedDates, dateStr) {
+            var startDateTime = selectedDates[0];
+            // Update the minDate for the endPicker to ensure the end date/time is after the start
+            endPicker.set('minDate', startDateTime);
         });
 
         $('#updateForm').on('submit', function (e) {
@@ -520,7 +597,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
         $('#discardBtn').on('click', function () {
-            modal.style.display = 'none';
+            softDeleteEvent(event.id);
         });
         modal.style.display = 'block';
     }
@@ -563,10 +640,22 @@ function updateBadgeVisibility() {
     }
 }
 
+// Format date to 'YYYY-MM-DDTHH:MM' (local time) for datetime-local input
+function formatDate(date) {
+    const year = date.getFullYear();
+    const month = ('0' + (date.getMonth() + 1)).slice(-2); // Ensure 2 digits
+    const day = ('0' + date.getDate()).slice(-2);
+    const hours = ('0' + date.getHours()).slice(-2);
+    const minutes = ('0' + date.getMinutes()).slice(-2);
+    const seconds = ('0' + date.getSeconds()).slice(-2);
+
+    return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+}
+
 // Update the event on the server
 function updateEvent(updatedEvent) {
     $.ajax({
-        url: 'update.php',  // Your API endpoint for updating events
+        url: 'update.php',
         type: 'POST',
         data: JSON.stringify(updatedEvent),
         contentType: 'application/json',
@@ -592,7 +681,7 @@ function updateEvent(updatedEvent) {
 // Delete the event on the server
 function deleteEvent(eventId) {
     $.ajax({
-        url: 'delete.php',  // Your API endpoint for deleting events
+        url: 'delete.php',
         type: 'POST',
         data: JSON.stringify({ id: eventId }),
         contentType: 'application/json',
@@ -614,6 +703,30 @@ function deleteEvent(eventId) {
         }
     });
 }
+function softDeleteEvent(eventId) {
+    $.ajax({
+        url: 'soft_delete.php',
+        type: 'POST',
+        data: JSON.stringify({ id: eventId }),
+        contentType: 'application/json',
+        success: function (response) {
+            try {
+                const res = JSON.parse(response);
+                if (res.success) {
+                    alert('Event soft-deleted successfully!');
+                    location.reload();
+                } else {
+                    alert('Error soft-deleting event: ' + res.error);
+                }
+            } catch (e) {
+                alert('Error parsing response: ' + e.message);
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert('Error soft-deleting event: ' + textStatus + ' - ' + errorThrown);
+        }
+    });
+}
 
 // Get all buttons inside the filter-events
 const buttons = document.querySelectorAll('#filter-events .btn');
@@ -631,6 +744,7 @@ buttons.forEach(button => {
             const quotedEventType = `"${eventType}"`; // Add quotes around the value
             url.searchParams.set('eventType', quotedEventType); // Update the eventType parameter
             window.history.pushState({}, '', url); // Update the URL without reloading the page
+            location.reload(); // Refresh the page
         }
         // Display events based on the selected type
         filterEvents(eventType);
@@ -699,11 +813,21 @@ flatpickr("#startDateTime", {
     enableSeconds: true,          // Enable seconds picker
     minDate: "today",
     dateFormat: "Y/m/d H:i:S",    // Correct format for including seconds (Y for 4-digit year, H for 24-hour time)
-    time_24hr: true               // Enable 24-hour time format
+    time_24hr: true,               // Enable 24-hour time format
+    onChange: function (selectedDates, dateStr, instance) {
+        // Set the minimum date of endDateTime to the selected start date
+        const startDate = selectedDates[0];
+        console.log(startDate);
+        // Update endDateTime flatpickr instance
+        if (startDate) {
+            endDatePicker.set('minDate', startDate);
+            endDatePicker.set('date', startDate); // Optionally set the end date to the start date
+        }
+    }
 });
 
 // Initialize Flatpickr for end date and time
-flatpickr("#endDateTime", {
+var endDatePicker = flatpickr("#endDateTime", {
     enableTime: true,
     enableSeconds: true,          // Enable seconds picker
     minDate: "today",
@@ -735,6 +859,9 @@ $(document).ready(function () {
 $(document).ready(function () {
     $('#eventForm').on('submit', function (e) {
         e.preventDefault();
+        if (!validateForm()) {
+            return false;
+        }
         var eventType = $('#event-type').val();
         var eventData = {
             title: $('#title').val(),
@@ -770,6 +897,75 @@ $(document).ready(function () {
         });
     });
 });
+
+function validateForm() {
+    var isValid = true;
+
+    // Validate Title
+    if ($('#title').val() === '') {
+        isValid = false;
+        $('#title-error').html('Title is required.');
+    }
+
+    // Validate Start Date
+    if ($('#startDateTime').val() === '') {
+        isValid = false;
+        $('#startDateTime-error').html('Start Date is required.');
+    }
+    // Validate Start Date
+    if ($('#endDateTime').val() === '') {
+        isValid = false;
+        $('#endDateTime-error').html('End Date is required.');
+    }
+
+    if ($('#description').val() === '') {
+        isValid = false;
+        $('#description-error').html('Description is required.');
+    }
+
+    // Validate Event Type
+    if ($('#event-type').val() === '') {
+        isValid = false;
+        $('#event-type-error').html('Event Type is required.');
+    }
+
+    // Validate Badge (if required)
+    if (!getSelectedBadge()) {
+        isValid = false;
+        $('#badge-selection').append('<span class="error-message" style="color: red;">Badge is required.</span>');
+    }
+
+    return isValid;
+}
+
+// function validateForm() {
+//     var title = $('#title').val();
+//     var startDate = $('#startDateTime').val();
+//     var eventType = $('#event-type').val();
+//     var badge = getSelectedBadge();
+
+//     if (title === '') {
+//         alert('Please enter the event title.');
+//         return false;
+//     }
+
+//     if (startDate === '') {
+//         alert('Please enter the start date.');
+//         return false;
+//     }
+
+//     if (eventType === '') {
+//         alert('Please select an event type.');
+//         return false;
+//     }
+
+//     if (!badge) {
+//         alert('Please select a badge for the event.');
+//         return false;
+//     }
+
+//     return true;
+// }
 
 // Function to get the selected badge
 function getSelectedBadge() {

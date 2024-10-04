@@ -4,7 +4,7 @@ require_once 'connect.php';
 header('Content-Type: application/json');
 
 // SQL query to select the required fields
-$sql = "SELECT id, title, start, end, description, type, badge, status FROM events";
+$sql = "SELECT id, title, start, end, description, type, badge, status FROM events WHERE is_deleted = 0";
 $result = $conn->query($sql);
 $events = array();
 
